@@ -23,10 +23,10 @@ synopsis:
 -- description:
 
 -- URL for the project homepage or repository.
-homepage:
+homepage: https://github.com/coveloper/gigsplitter
 
 -- A URL where users can report bugs.
--- bug-reports:
+bug-reports: https://github.com/coveloper
 
 -- The license under which the package is released.
 license:            MIT
@@ -38,7 +38,7 @@ license-file:       LICENSE
 author:             Jon Bauer
 
 -- An email address to which users can send suggestions, bug reports, and patches.
-maintainer:         jon@covelop.org
+maintainer:         https://github.com/coveloper
 
 -- A copyright notice.
 -- copyright:
