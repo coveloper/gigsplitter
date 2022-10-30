@@ -1,4 +1,4 @@
-cabal-version:      2.4
+cabal-version:      3.0
 name:               gigsplitter
 version:            0.1.0.0
 synopsis: A Plutus app to split payments among band members
@@ -19,9 +19,30 @@ extra-source-files:
     CHANGELOG.md
     README.md
 
+flag defer-plugin-errors
+    description:
+        Defer errors from the plugin, useful for things like Haddock that can't handle it.
+    default: False
+    manual: True
+
+common lang
+    default-language:   Haskell2010
+    ghc-options:
+      -Wall -Wnoncanonical-monad-instances
+      -Wincomplete-uni-patterns -Wincomplete-record-updates
+      -Wredundant-constraints -Widentities -rtsopts
+      -- See Plutus Tx readme
+      -fobject-code -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    if flag(defer-plugin-errors)
+        ghc-options: -fplugin-opt PlutusTx.Plugin:defer-errors
+
 library
+    import: lang
+
     -- Modules exported by the library.
-    exposed-modules:  MyLib
+    exposed-modules:  
+        --MyLib,
+        Validators.DepositValidator
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -30,47 +51,31 @@ library
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.14.3.0
+    build-depends:
+        base >= 4.9 && < 5,
+        aeson -any,
+        bytestring -any,
+        containers -any,
+        freer-extras -any,
+        playground-common -any,
+        plutus-contract -any,
+        plutus-ledger -any,
+        plutus-ledger-api -any,
+        plutus-ledger-constraints -any,
+        plutus-tx -any,
+        plutus-tx-plugin -any,
+        plutus-script-utils -any,
+        text -any,
+        lens -any,
+        cardano-api, 
+        cardano-binary,
+      --additionals
+        serialise -any,
+        base16-bytestring,
+        data-default,
 
     -- Directories containing source files.
     hs-source-dirs:   src
 
     -- Base language which the package is written in.
     default-language: Haskell2010
-
-executable gigsplitter
-    -- .hs or .lhs file containing the Main module.
-    main-is:          Main.hs
-
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-
-    -- Other library packages from which modules are imported.
-    build-depends:
-        base ^>=4.14.3.0,
-        gigsplitter
-
-    -- Directories containing source files.
-    hs-source-dirs:   app
-
-    -- Base language which the package is written in.
-    default-language: Haskell2010
-
-test-suite gigsplitter-test
-    -- Base language which the package is written in.
-    default-language: Haskell2010
-
-    -- The interface type and version of the test suite.
-    type:             exitcode-stdio-1.0
-
-    -- Directories containing source files.
-    hs-source-dirs:   test
-
-    -- The entrypoint to the test suite.
-    main-is:          MyLibTest.hs
-
-    -- Test dependencies.
-    build-depends:    base ^>=4.14.3.0
