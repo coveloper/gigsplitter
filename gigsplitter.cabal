@@ -42,7 +42,11 @@ library
     -- Modules exported by the library.
     exposed-modules:  
         --MyLib,
-        Validators.DepositValidator
+        --Validators.DepositValidator,
+        Validators.PayoutValidator,
+        GigsplitterEmulator,
+        GigsplitterOffChain,
+        GigsplitterOnChain
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -73,6 +77,7 @@ library
         serialise -any,
         base16-bytestring,
         data-default,
+        openapi3
 
     -- Directories containing source files.
     hs-source-dirs:   src

@@ -13,7 +13,7 @@ import qualified Plutus.Script.Utils.V2.Scripts as V2UtilsScripts
 
 --3 Onchain code
 
---Actual validator logic
+{-# INLINEABLE depositV #-}
 depositV :: BuiltinData -> BuiltinData -> BuiltinData -> ()
 depositV _ _ _ = error ()
 
