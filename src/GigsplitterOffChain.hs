@@ -65,11 +65,8 @@ type GigSchema =
 -- deposit
 deposit :: PlutusContract.AsContractError e => DepositParams -> PlutusContract.Contract w s e ()
 deposit dp = do
-    let p = OnChain.DepositDetails
+    let p = OnChain.PayoutDetails
             {
-                -- OnChain.creator = recipientVenue dp,
-                -- OnChain.beneficiary = recipientManager dp,
-                -- OnChain.deadline = paymentDeadline dp
                 OnChain.recipientVenue    = recipientVenue dp,
                 OnChain.recipientManager  = recipientManager dp, 
                 OnChain.recipientSinger   = recipientSinger dp,
@@ -120,7 +117,7 @@ payout redeem = do
 
 
 -- This puts all together. The select means to offer selection to the user. 
-endpoints :: PlutusContract.Contract () GigSchema T.Text T.Text
+endpoints :: PlutusContract.Contract () GigSchema T.Text ()
 endpoints = PlutusContract.awaitPromise (deposit' `PlutusContract.select` payout') >> endpoints
     where 
         deposit' = PlutusContract.endpoint @"Deposit" deposit
