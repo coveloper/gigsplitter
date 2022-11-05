@@ -31,21 +31,18 @@ import qualified Plutus.V1.Ledger.Interval                       as LedgerInterv
 -- import qualified Ledger.Ada                                      as Ada
 
 
-data PayoutDetails = PayoutDetails -- This specifies who we payout to and how much ADA is stored in escrow
+data EscrowDetails = EscrowDetails -- This specifies who we payout to and how much ADA is stored in escrow
     {
-        recipientVenue    :: Ledger.PaymentPubKeyHash,
-        recipientManager  :: Ledger.PaymentPubKeyHash, 
-        recipientSinger   :: Ledger.PaymentPubKeyHash,
-        recipientBass     :: Ledger.PaymentPubKeyHash, 
-        recipientDrums    :: Ledger.PaymentPubKeyHash,
-        recipientGuitar   :: Ledger.PaymentPubKeyHash,
+        recipientVenue    :: Ledger.PaymentPubKeyHash, -- In case the show is canceled, money goes back to venue
+        recipientManager  :: Ledger.PaymentPubKeyHash, -- Manager will get 20% of amountDeposited
+        bandMembers       :: [Ledger.PaymentPubKeyHash], -- List of all band members, who will get the remaining ADA after Manager is paid
         paymentDeadline   :: V2LedgerApi.POSIXTime,
         amountDeposited   :: P.Integer,
         showId            :: P.Integer
     } deriving P.Show
 
-PlutusTx.unstableMakeIsData ''PayoutDetails
-PlutusTx.makeLift ''PayoutDetails
+PlutusTx.unstableMakeIsData ''EscrowDetails
+PlutusTx.makeLift ''EscrowDetails
 
 newtype Redeem = Redeem
     {
@@ -64,7 +61,7 @@ PlutusTx.unstableMakeIsData ''Dat
 PlutusTx.makeLift ''Dat
 
 {-# INLINEABLE depositV #-}
-depositV :: PayoutDetails -> Dat -> Redeem -> Contexts.ScriptContext -> Bool
+depositV :: EscrowDetails -> Dat -> Redeem -> Contexts.ScriptContext -> Bool
 depositV depositp d r context = 
     traceIfFalse "Sorry the guess is not correct" (ddata d == redeem r) &&
     traceIfFalse "Wrong pubkeyhash" signedByBeneficiary &&
@@ -100,23 +97,23 @@ instance V2UtilsTypeScripts.ValidatorTypes DepositType where
     type instance RedeemerType DepositType = Redeem
     type instance DatumType DepositType = Dat
 
--- depositTypeV :: PayoutDetails -> V2UtilsTypeScripts.TypedValidator DepositType
+-- depositTypeV :: EscrowDetails -> V2UtilsTypeScripts.TypedValidator DepositType
 -- depositTypeV depositp = V2UtilsTypeScripts.mkTypedValidator @DepositType 
 --     ($$(compile [|| depositV ||]) `PlutusTx.applyCode` PlutusTx.liftCode depositp)
 --     $$(compile [|| wrap ||]) where
 --         wrap = V2UtilsTypeScripts.mkUntypedValidator @Dat @Redeem
 
-depositTypeV :: PayoutDetails -> V2UtilsTypeScripts.TypedValidator DepositType
+depositTypeV :: EscrowDetails -> V2UtilsTypeScripts.TypedValidator DepositType
 depositTypeV depositp = V2UtilsTypeScripts.mkTypedValidator @DepositType 
     ($$(compile [|| depositV ||]) `PlutusTx.applyCode` PlutusTx.liftCode depositp)
     $$(compile [|| wrap ||]) where
         wrap = V2UtilsTypeScripts.mkUntypedValidator @Dat @Redeem
 
-validator :: PayoutDetails -> V2LedgerApi.Validator
+validator :: EscrowDetails -> V2LedgerApi.Validator
 validator = V2UtilsTypeScripts.validatorScript . depositTypeV
 
-validatorHash :: PayoutDetails -> V2LedgerApi.ValidatorHash
+validatorHash :: EscrowDetails -> V2LedgerApi.ValidatorHash
 validatorHash = V2UtilsTypeScripts.validatorHash . depositTypeV
 
-address :: PayoutDetails -> V1LAddress.Address
+address :: EscrowDetails -> V1LAddress.Address
 address = V1LAddress.scriptHashAddress . validatorHash

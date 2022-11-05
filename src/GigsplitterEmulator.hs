@@ -30,29 +30,29 @@ trace1 = do
     guitarWallet    <- Emulator.activateContractWallet (Wallet.knownWallet 6) OffChain.endpoints
 
     Emulator.callEndpoint @"Deposit" venueWallet $ OffChain.DepositParams {
-          OffChain.recipientVenue    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
-          OffChain.recipientManager  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
-          OffChain.recipientSinger   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
-          OffChain.recipientBass     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
-          OffChain.recipientDrums    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
-          OffChain.recipientGuitar   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
+          OffChain.venuePerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
+          OffChain.managerPerson  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
+          OffChain.singerPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
+          OffChain.bassPerson     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
+          OffChain.drumsPerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
+          OffChain.guitarPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
           OffChain.paymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
           OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
           OffChain.showId            = 1 -- key for specific Gig, to use in another onlne db
     }
     void $ waitNSlots 2
-    Emulator.callEndpoint @"Payout" venueWallet $ OffChain.DepositParams {
-          OffChain.recipientVenue    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
-          OffChain.recipientManager  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
-          OffChain.recipientSinger   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
-          OffChain.recipientBass     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
-          OffChain.recipientDrums    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
-          OffChain.recipientGuitar   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
-          OffChain.paymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
-          OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
-          OffChain.showId            = 1 -- key for specific Gig, to use in another onlne db
-    }
-    void $ waitNSlots 2
+    -- Emulator.callEndpoint @"Payout" venueWallet $ OffChain.DepositParams {
+    --       OffChain.recipientVenue    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
+    --       OffChain.recipientManager  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
+    --       OffChain.recipientSinger   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
+    --       OffChain.recipientBass     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
+    --       OffChain.recipientDrums    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
+    --       OffChain.recipientGuitar   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
+    --       OffChain.paymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
+    --       OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
+    --       OffChain.showId            = 1 -- key for specific Gig, to use in another onlne db
+    -- }
+    -- void $ waitNSlots 15
     -- Emulator.callEndpoint @"Grab" h1 $ OffChain.GrabParams {
     --       OffChain.gpCreator  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3
     --     , OffChain.gpDeadline = TimeSlot.slotToBeginPOSIXTime def 15

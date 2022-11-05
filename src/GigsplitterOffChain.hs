@@ -65,14 +65,14 @@ type GigSchema =
 -- deposit
 deposit :: PlutusContract.AsContractError e => DepositParams -> PlutusContract.Contract w s e ()
 deposit dp = do
-    let p = OnChain.PayoutDetails
+    let p = OnChain.EscrowDetails
             {
                 OnChain.recipientVenue    = venuePerson dp,
                 OnChain.recipientManager  = managerPerson dp, 
-                OnChain.recipientSinger   = singerPerson dp,
-                OnChain.recipientBass     = bassPerson dp, 
-                OnChain.recipientDrums    = drumsPerson dp,
-                OnChain.recipientGuitar   = guitarPerson dp,
+                OnChain.bandMembers       = [singerPerson dp,
+                                             bassPerson dp,
+                                             drumsPerson dp,
+                                             guitarPerson dp],
                 OnChain.paymentDeadline   = paymentDeadline dp,
                 OnChain.amountDeposited   = amountDeposited dp,
                 OnChain.showId            = showId dp
