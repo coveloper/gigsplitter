@@ -37,10 +37,14 @@ trace1 = do
           OffChain.drumsPerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
           OffChain.guitarPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
           OffChain.paymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
-          OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
+        --   OffChain.amountDeposited   = 25000000, -- 25 ADA (makes the playout splits easier for now)
+          OffChain.amountDeposited   = 1000000, -- 1 ADA (just for testing)
           OffChain.showId            = 1 -- key for specific Gig, to use in another onlne db
     }
-    void $ waitNSlots 2
+    Extras.logInfo $ "Deposit Made"
+    s <- waitNSlots 2
+    Extras.logInfo $ "reached " ++ show s
+    
     -- Emulator.callEndpoint @"Payout" venueWallet $ OffChain.DepositParams {
     --       OffChain.recipientVenue    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
     --       OffChain.recipientManager  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
