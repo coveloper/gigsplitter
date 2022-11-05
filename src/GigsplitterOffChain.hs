@@ -44,12 +44,12 @@ import qualified GigsplitterOnChain as OnChain
 
 data DepositParams =
     DepositParams
-        { recipientVenue    :: Ledger.PaymentPubKeyHash,
-          recipientManager  :: Ledger.PaymentPubKeyHash, 
-          recipientSinger   :: Ledger.PaymentPubKeyHash,
-          recipientBass     :: Ledger.PaymentPubKeyHash, 
-          recipientDrums    :: Ledger.PaymentPubKeyHash,
-          recipientGuitar   :: Ledger.PaymentPubKeyHash,
+        { venuePerson       :: Ledger.PaymentPubKeyHash,
+          managerPerson     :: Ledger.PaymentPubKeyHash, 
+          singerPerson      :: Ledger.PaymentPubKeyHash,
+          bassPerson        :: Ledger.PaymentPubKeyHash, 
+          drumsPerson       :: Ledger.PaymentPubKeyHash,
+          guitarPerson      :: Ledger.PaymentPubKeyHash,
           paymentDeadline   :: LedgerApiV2.POSIXTime,
           amountDeposited   :: P.Integer,
           showId            :: P.Integer
@@ -67,12 +67,12 @@ deposit :: PlutusContract.AsContractError e => DepositParams -> PlutusContract.C
 deposit dp = do
     let p = OnChain.PayoutDetails
             {
-                OnChain.recipientVenue    = recipientVenue dp,
-                OnChain.recipientManager  = recipientManager dp, 
-                OnChain.recipientSinger   = recipientSinger dp,
-                OnChain.recipientBass     = recipientBass dp, 
-                OnChain.recipientDrums    = recipientDrums dp,
-                OnChain.recipientGuitar   = recipientGuitar dp,
+                OnChain.recipientVenue    = venuePerson dp,
+                OnChain.recipientManager  = managerPerson dp, 
+                OnChain.recipientSinger   = singerPerson dp,
+                OnChain.recipientBass     = bassPerson dp, 
+                OnChain.recipientDrums    = drumsPerson dp,
+                OnChain.recipientGuitar   = guitarPerson dp,
                 OnChain.paymentDeadline   = paymentDeadline dp,
                 OnChain.amountDeposited   = amountDeposited dp,
                 OnChain.showId            = showId dp

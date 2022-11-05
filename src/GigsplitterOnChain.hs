@@ -31,7 +31,7 @@ import qualified Plutus.V1.Ledger.Interval                       as LedgerInterv
 -- import qualified Ledger.Ada                                      as Ada
 
 
-data PayoutDetails = PayoutDetails
+data PayoutDetails = PayoutDetails -- This specifies who we payout to and how much ADA is stored in escrow
     {
         recipientVenue    :: Ledger.PaymentPubKeyHash,
         recipientManager  :: Ledger.PaymentPubKeyHash, 
