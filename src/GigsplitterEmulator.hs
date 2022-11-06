@@ -38,7 +38,7 @@ trace1 = do
           OffChain.guitarPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
           OffChain.paymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
         --   OffChain.amountDeposited   = 25000000, -- 25 ADA (makes the playout splits easier for now)
-          OffChain.amountDeposited   = 1000000, -- 1 ADA (just for testing)
+          OffChain.amountDeposited   = 3000000, -- 3 ADA (just for testing)
           OffChain.showId            = 1 -- key for specific Gig, to use in another onlne db
     }
     Extras.logInfo $ "Deposit Made"

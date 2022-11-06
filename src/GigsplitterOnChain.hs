@@ -60,22 +60,33 @@ data Dat = Dat
 PlutusTx.unstableMakeIsData ''Dat
 PlutusTx.makeLift ''Dat
 
+-- Just a Test Validator that always succeeds to test my OffChain code
+-- {-# INLINEABLE depositV #-}
+-- depositV :: EscrowDetails -> Dat -> Redeem -> Contexts.ScriptContext -> Bool
+-- depositV depositp d r context = 
+--     traceIfFalse "This should not actually get printed" True -- 
+--     where
+--         txinfo :: Contexts.TxInfo
+--         txinfo = Contexts.scriptContextTxInfo context
+
+-- Deposit Validator
 {-# INLINEABLE depositV #-}
 depositV :: EscrowDetails -> Dat -> Redeem -> Contexts.ScriptContext -> Bool
 depositV depositp d r context = 
-    traceIfFalse "Sorry the guess is not correct" (ddata d == redeem r) &&
-    traceIfFalse "Wrong pubkeyhash" signedByBeneficiary &&
-    traceIfFalse "Deadline not yet reached"  deadlinepassed 
+    traceIfFalse "This should not actually get printed" True -- Always pass during dev
+    -- traceIfFalse "Sorry the guess is not correct" (ddata d == redeem r) &&
+    -- traceIfFalse "Wrong pubkeyhash" signedByBeneficiary &&
+    -- traceIfFalse "Deadline not yet reached"  deadlinepassed 
     -- && traceIfFalse "Not paid royalties"  calculateRoyalties
     where
         txinfo :: Contexts.TxInfo
         txinfo = Contexts.scriptContextTxInfo context
 
-        signedByBeneficiary :: Bool
-        signedByBeneficiary = Contexts.txSignedBy txinfo $ Ledger.unPaymentPubKeyHash (recipientManager depositp)
+        -- signedByBeneficiary :: Bool
+        -- signedByBeneficiary = Contexts.txSignedBy txinfo $ Ledger.unPaymentPubKeyHash (recipientManager depositp)
 
-        deadlinepassed :: Bool
-        deadlinepassed = LedgerIntervalV1.contains (LedgerIntervalV1.from (paymentDeadline depositp)) (Contexts.txInfoValidRange txinfo)
+        -- deadlinepassed :: Bool
+        -- deadlinepassed = LedgerIntervalV1.contains (LedgerIntervalV1.from (paymentDeadline depositp)) (Contexts.txInfoValidRange txinfo)
         
         -- adaroyalties :: Maybe Ada.Ada
         -- adaroyalties = do
