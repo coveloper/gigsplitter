@@ -58,14 +58,34 @@ data DepositParams =
 PlutusTx.unstableMakeIsData ''DepositParams
 -- PlutusTx.makeLift ''DepositParams
 
+-- data PayoutParams = PayoutParams 
+--     {
+--         ppShowId              :: Integer
+--     } deriving (GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON)
+data PayoutParams =
+    PayoutParams
+        { ppVenuePerson       :: Ledger.PaymentPubKeyHash,
+          ppManagerPerson     :: Ledger.PaymentPubKeyHash, 
+          ppSingerPerson      :: Ledger.PaymentPubKeyHash,
+          ppBassPerson        :: Ledger.PaymentPubKeyHash, 
+          ppDrumsPerson       :: Ledger.PaymentPubKeyHash,
+          ppGuitarPerson      :: Ledger.PaymentPubKeyHash,
+          ppPaymentDeadline   :: LedgerApiV2.POSIXTime,
+          ppAmountDeposited   :: P.Integer,
+          ppShowId            :: P.Integer
+        }
+    deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON)
+
+PlutusTx.unstableMakeIsData ''PayoutParams
+
 type GigSchema =
     PlutusContract.Endpoint "Deposit" DepositParams
-    PlutusContract..\/ PlutusContract.Endpoint "Payout" DepositParams
+    PlutusContract..\/ PlutusContract.Endpoint "Payout" PayoutParams
 
 -- deposit
 deposit :: PlutusContract.AsContractError e => DepositParams -> PlutusContract.Contract w s e ()
 deposit dp = do
-    let p = OnChain.EscrowDetails
+    let p = OnChain.EscrowDetails -- Populate OnChain.EscrowDetails with values from DepositParams
             {
                 OnChain.recipientVenue    = venuePerson dp,
                 OnChain.recipientManager  = managerPerson dp, 
@@ -74,10 +94,9 @@ deposit dp = do
                                              drumsPerson dp,
                                              guitarPerson dp],
                 OnChain.paymentDeadline   = paymentDeadline dp,
-                OnChain.amountDeposited   = amountDeposited dp,
-                OnChain.showId            = showId dp
+                OnChain.amountDeposited   = amountDeposited dp
             }
-        d = OnChain.Dat { OnChain.ddata = showId dp}
+        d = OnChain.Dat { OnChain.showId = showId dp}
         v = Ada.lovelaceValueOf P.$ amountDeposited dp
         txConstraints = Constraints.mustPayToOtherScript (OnChain.validatorHash p) (LedgerApiV2.Datum P.$ PlutusTx.toBuiltinData d) v
         lookups = Constraints.plutusV2OtherScript P.$ OnChain.validator p
@@ -91,29 +110,81 @@ deposit dp = do
     PlutusContract.logInfo @P.String P.$ TextPrintf.printf "--------------------------- Start Endpoint - Submited - Datum: %s - Value: %s ---------------------------" (P.show d) (P.show v)
     PlutusContract.logInfo @P.String P.$ TextPrintf.printf "--------------------------- Script with Address: %s and Hash: %s ---------------------------" (P.show scriptAddress) (P.show scriptHash)
 
+-- Payout
+payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
+payout PayoutParams{..} = do
+    requestor <- PlutusContract.ownFirstPaymentPubKeyHash
+    now <- PlutusContract.currentTime
+    if now < ppPaymentDeadline
+        then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppPaymentDeadline) (P.show now)
+        else do
+            let param = OnChain.EscrowDetails {
+                        OnChain.recipientVenue    = ppVenuePerson,
+                        OnChain.recipientManager  = ppManagerPerson, 
+                        OnChain.bandMembers       = [ppSingerPerson,
+                                                    ppBassPerson,
+                                                    ppDrumsPerson,
+                                                    ppGuitarPerson],
+                        OnChain.paymentDeadline   = ppPaymentDeadline,
+                        OnChain.amountDeposited   = ppAmountDeposited
+                }
+                r = OnChain.Redeem { OnChain.redeem = ppShowId }
+            maybeutxo <- findUtxoInValidator param ppShowId --finds the utxos associated to the beneficiary that have valid deadline and guess number
+            case maybeutxo of
+                Nothing -> PlutusContract.logInfo @P.String $ TextPrintf.printf "Wrong ShowId %s or not deadline reached %s or wrong beneficiary" (P.show r) (P.show $ now)
+                Just (oref, o) -> do
+                    PlutusContract.logInfo @P.String $ TextPrintf.printf "Redeem utxos %s - with timing now at %s:" (P.show oref) (P.show $ now)
+                    let lookups = Constraints.unspentOutputs (Map.singleton oref o) P.<>
+                                  Constraints.plutusV2OtherScript (OnChain.validator param)
+                        tx = Constraints.mustSpendScriptOutput oref (ScriptsLedger.Redeemer $ PlutusTx.toBuiltinData r) P.<>
+                            Constraints.mustValidateIn (LedgerApiV2.from now) P.<>
+                            Constraints.mustPayToPubKey ppManagerPerson (getTotalValuePay o) -- We need to pay everone
+                    submittedTx <- PlutusContract.submitTxConstraintsWith @OnChain.DepositType lookups tx
+                    Monad.void $ PlutusContract.awaitTxConfirmed $ LedgerTx.getCardanoTxId submittedTx
+                    PlutusContract.logInfo @P.String $ "Payout complete"
 
--- payout
--- payout :: forall w s e. PlutusContract.AsContractError e => DepositParams -> PlutusContract.Contract w s e ()
-payout :: forall w s. DepositParams -> PlutusContract.Contract w s T.Text ()
-payout redeem = do
-    PlutusContract.logInfo @P.String $ "Placeholder for Payout"
-    -- if redeem == 300
-        -- then do
-                -- utxos <- PlutusContract.utxosAt OnChain.address
-                -- let orefs   = fst <$> Map.toList utxos
-                --     lookups = Constraints.unspentOutputs utxos      P.<>
-                --             Constraints.plutusV2OtherScript OnChain.validator
-                --     tx :: Constraints.TxConstraints Void.Void Void.Void
-                --     tx      = mconcat [Constraints.mustSpendScriptOutput oref $ ScriptsLedger.Redeemer $ PlutusTx.toBuiltinData (OnChain.Redeem redeem) | oref <- orefs]
-                -- submittedTx <- PlutusContract.submitTxConstraintsWith @Void.Void lookups tx
-                -- Monad.void $ PlutusContract.awaitTxConfirmed $ LedgerTx.getCardanoTxId submittedTx
-                -- PlutusContract.logInfo @P.String $ "collected gifts"
-        -- else PlutusContract.logInfo @P.String $ "Wrong guess"
-        
--- close
--- unlock :: Promise () GigSchema T.Text ()
--- unlock = endpoint @"unlock" 
--- (unlockFunds . mkSplitData)
+getDatum :: (LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut) -> Maybe OnChain.Dat
+getDatum (_, o) = do
+    let 
+        datHashOrDatum = LedgerTx._ciTxOutScriptDatum o
+
+    LedgerApiV2.Datum e <- snd datHashOrDatum
+    
+    case (LedgerApiV2.fromBuiltinData e :: Maybe OnChain.Dat) of    
+        Nothing -> Nothing
+        d -> d
+
+checkUTXO :: (LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut) -> Integer -> Bool
+checkUTXO (oref,o) n = do
+    case getDatum (oref,o) of
+        Nothing -> False
+        Just OnChain.Dat{..}
+            | showId == n -> True
+            | otherwise  -> False
+
+findUTXO :: [(LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut)] -> Integer -> (Maybe (LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut))
+findUTXO [] _ = Nothing
+findUTXO [(oref,o)] n = do
+    if checkUTXO (oref, o) n then 
+        return (oref, o)
+    else 
+        Nothing
+findUTXO ((oref,o):xs) n
+    | checkUTXO (oref ,o)  n = return (oref, o)
+    | otherwise = findUTXO xs n
+
+findUtxoInValidator :: OnChain.EscrowDetails -> Integer -> PlutusContract.Contract w s T.Text (Maybe (LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut))
+findUtxoInValidator gparam n = do
+    utxos <- PlutusContract.utxosAt $ OnChain.address gparam
+    let 
+        xs = [ (oref, o) | (oref, o) <- Map.toList utxos ]
+        out = findUTXO xs n
+    return out
+
+getTotalValuePay :: LedgerTx.ChainIndexTxOut -> Ledger.Value
+getTotalValuePay o = do
+    Ada.toValue $ (Ada.fromValue $ LedgerTx._ciTxOutValue o) `Ada.divide` 10
+    -- return tValue
 
 
 -- This puts all together. The select means to offer selection to the user. 

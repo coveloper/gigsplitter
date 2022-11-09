@@ -37,8 +37,8 @@ data EscrowDetails = EscrowDetails -- This specifies who we payout to and how mu
         recipientManager  :: Ledger.PaymentPubKeyHash, -- Manager will get 20% of amountDeposited
         bandMembers       :: [Ledger.PaymentPubKeyHash], -- List of all band members, who will get the remaining ADA after Manager is paid
         paymentDeadline   :: V2LedgerApi.POSIXTime,
-        amountDeposited   :: P.Integer,
-        showId            :: P.Integer
+        amountDeposited   :: P.Integer
+        -- ,showId            :: P.Integer
     } deriving P.Show
 
 PlutusTx.unstableMakeIsData ''EscrowDetails
@@ -54,11 +54,22 @@ PlutusTx.makeLift ''Redeem
 
 data Dat = Dat 
     {
-        ddata :: Integer -- showId
+        showId :: Integer -- showId
     } deriving P.Show
 
 PlutusTx.unstableMakeIsData ''Dat
 PlutusTx.makeLift ''Dat
+
+-- data PayoutDetails = PayoutDetails -- This specifies who we payout to and how much ADA is stored in escrow
+--     {
+--         payee             :: Ledger.PaymentPubKeyHash,
+--         paymentDate       :: V2LedgerApi.POSIXTime,
+--         amountPaid        :: P.Integer,
+--         showId            :: P.Integer
+--     } deriving P.Show
+
+-- PlutusTx.unstableMakeIsData ''PayoutDetails
+-- PlutusTx.makeLift ''PayoutDetails
 
 -- Just a Test Validator that always succeeds to test my OffChain code
 -- {-# INLINEABLE depositV #-}
