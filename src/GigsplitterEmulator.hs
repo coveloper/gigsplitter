@@ -44,18 +44,19 @@ trace1 = do
     Extras.logInfo $ "Deposit Made"
     s <- waitNSlots 2
     Extras.logInfo $ "reached " ++ show s
-    
-    -- Emulator.callEndpoint @"Payout" venueWallet $ OffChain.DepositParams {
-    --       OffChain.recipientVenue    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
-    --       OffChain.recipientManager  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
-    --       OffChain.recipientSinger   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
-    --       OffChain.recipientBass     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
-    --       OffChain.recipientDrums    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
-    --       OffChain.recipientGuitar   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
-    --       OffChain.paymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
-    --       OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
-    --       OffChain.showId            = 1 -- key for specific Gig, to use in another onlne db
-    -- }
+
+    Emulator.callEndpoint @"Payout" venueWallet $ OffChain.PayoutParams {
+          OffChain.ppVenuePerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
+          OffChain.ppManagerPerson  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
+          OffChain.ppSingerPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
+          OffChain.ppBassPerson     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
+          OffChain.ppDrumsPerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
+          OffChain.ppGuitarPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
+          OffChain.ppPaymentDeadline   = TimeSlot.slotToBeginPOSIXTime def 30,
+          --OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
+          OffChain.ppAmountDeposited   = 3000000, -- 3 ADA (just for testing)
+          OffChain.ppShowId            = 1 -- key for specific Gig, to use in another onlne db
+    }
     -- void $ waitNSlots 15
     -- Emulator.callEndpoint @"Grab" h1 $ OffChain.GrabParams {
     --       OffChain.gpCreator  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3

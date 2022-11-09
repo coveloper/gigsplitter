@@ -54,7 +54,7 @@ data DepositParams =
           amountDeposited   :: P.Integer,
           showId            :: P.Integer
         }
-    deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON)
+    deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON, DataOpenApiSchema.ToSchema)
 PlutusTx.unstableMakeIsData ''DepositParams
 -- PlutusTx.makeLift ''DepositParams
 
@@ -74,7 +74,7 @@ data PayoutParams =
           ppAmountDeposited   :: P.Integer,
           ppShowId            :: P.Integer
         }
-    deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON)
+    deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON, DataOpenApiSchema.ToSchema)
 
 PlutusTx.unstableMakeIsData ''PayoutParams
 
