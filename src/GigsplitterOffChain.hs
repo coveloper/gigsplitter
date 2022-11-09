@@ -115,7 +115,8 @@ payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
 payout PayoutParams{..} = do
     requestor <- PlutusContract.ownFirstPaymentPubKeyHash
     now <- PlutusContract.currentTime
-    if now < ppPaymentDeadline
+    -- if now < ppPaymentDeadline
+    if now > ppPaymentDeadline -- make sure we are calling payout AFTER the deadline (show date)
         then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppPaymentDeadline) (P.show now)
         else do
             let param = OnChain.EscrowDetails {
@@ -129,6 +130,11 @@ payout PayoutParams{..} = do
                         OnChain.amountDeposited   = ppAmountDeposited
                 }
                 r = OnChain.Redeem { OnChain.redeem = ppShowId }
+        --utxos <- PlutusContract.utxosAt $ OnChain.address param
+        -- utxos <- findUtxoInValidator param ppShowId
+        -- if Map.null utxos
+        -- then PlutusContract.logInfo @P.String $ "No utxos found"
+        -- else PlutusContract.logInfo @P.String $ "utxos Available"
             maybeutxo <- findUtxoInValidator param ppShowId --finds the utxos associated to the beneficiary that have valid deadline and guess number
             case maybeutxo of
                 Nothing -> PlutusContract.logInfo @P.String $ TextPrintf.printf "Wrong ShowId %s or not deadline reached %s or wrong beneficiary" (P.show r) (P.show $ now)
