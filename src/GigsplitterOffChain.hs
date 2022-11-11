@@ -39,7 +39,6 @@ import qualified Data.Text as T
 import Plutus.Contract (Contract, Endpoint, Promise, endpoint, logInfo, selectList, submitTxConstraints,
                         submitTxConstraintsSpending, type (.\/), utxosAt)
 
-
 import qualified GigsplitterOnChain as OnChain
 
 data DepositParams =
@@ -50,7 +49,7 @@ data DepositParams =
           bassPerson        :: Ledger.PaymentPubKeyHash, 
           drumsPerson       :: Ledger.PaymentPubKeyHash,
           guitarPerson      :: Ledger.PaymentPubKeyHash,
-          paymentDeadline   :: LedgerApiV2.POSIXTime,
+          contractTimestamp :: LedgerApiV2.POSIXTime,
           amountDeposited   :: P.Integer,
           showId            :: P.Integer
         }
@@ -70,7 +69,7 @@ data PayoutParams =
           ppBassPerson        :: Ledger.PaymentPubKeyHash, 
           ppDrumsPerson       :: Ledger.PaymentPubKeyHash,
           ppGuitarPerson      :: Ledger.PaymentPubKeyHash,
-          ppPaymentDeadline   :: LedgerApiV2.POSIXTime,
+          ppContractTimestamp :: LedgerApiV2.POSIXTime,
           ppAmountDeposited   :: P.Integer,
           ppShowId            :: P.Integer
         }
@@ -93,7 +92,7 @@ deposit dp = do
                                              bassPerson dp,
                                              drumsPerson dp,
                                              guitarPerson dp],
-                OnChain.paymentDeadline   = paymentDeadline dp,
+                OnChain.contractTimestamp = contractTimestamp dp,
                 OnChain.amountDeposited   = amountDeposited dp
             }
         d = OnChain.Dat { OnChain.showId = showId dp}
@@ -116,8 +115,8 @@ payout PayoutParams{..} = do
     requestor <- PlutusContract.ownFirstPaymentPubKeyHash
     now <- PlutusContract.currentTime
     -- if now < ppPaymentDeadline
-    if now > ppPaymentDeadline -- make sure we are calling payout AFTER the deadline (show date)
-        then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppPaymentDeadline) (P.show now)
+    if now > ppContractTimestamp -- make sure we are calling payout AFTER the deadline (show date)
+        then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppContractTimestamp) (P.show now)
         else do
             let param = OnChain.EscrowDetails {
                         OnChain.recipientVenue    = ppVenuePerson,
@@ -126,7 +125,7 @@ payout PayoutParams{..} = do
                                                     ppBassPerson,
                                                     ppDrumsPerson,
                                                     ppGuitarPerson],
-                        OnChain.paymentDeadline   = ppPaymentDeadline,
+                        OnChain.contractTimestamp = ppContractTimestamp,
                         OnChain.amountDeposited   = ppAmountDeposited
                 }
                 r = OnChain.Redeem { OnChain.redeem = ppShowId }

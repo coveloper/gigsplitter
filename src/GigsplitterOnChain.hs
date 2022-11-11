@@ -30,15 +30,16 @@ import qualified Ledger                                          (PaymentPubKeyH
 import qualified Plutus.V1.Ledger.Interval                       as LedgerIntervalV1
 -- import qualified Ledger.Ada                                      as Ada
 
-
+-- In case the show is canceled, money goes back to venue
+-- Manager will get 20% of amountDeposited
+-- List of all band members, who will get the remaining ADA after Manager is paid
 data EscrowDetails = EscrowDetails -- This specifies who we payout to and how much ADA is stored in escrow
     {
-        recipientVenue    :: Ledger.PaymentPubKeyHash, -- In case the show is canceled, money goes back to venue
-        recipientManager  :: Ledger.PaymentPubKeyHash, -- Manager will get 20% of amountDeposited
-        bandMembers       :: [Ledger.PaymentPubKeyHash], -- List of all band members, who will get the remaining ADA after Manager is paid
-        paymentDeadline   :: V2LedgerApi.POSIXTime,
+        recipientVenue    :: Ledger.PaymentPubKeyHash, 
+        recipientManager  :: Ledger.PaymentPubKeyHash, 
+        bandMembers       :: [Ledger.PaymentPubKeyHash],
+        contractTimestamp :: V2LedgerApi.POSIXTime,
         amountDeposited   :: P.Integer
-        -- ,showId            :: P.Integer
     } deriving P.Show
 
 PlutusTx.unstableMakeIsData ''EscrowDetails
@@ -97,7 +98,7 @@ depositV depositp d r context =
         -- signedByBeneficiary = Contexts.txSignedBy txinfo $ Ledger.unPaymentPubKeyHash (recipientManager depositp)
 
         -- deadlinepassed :: Bool
-        -- deadlinepassed = LedgerIntervalV1.contains (LedgerIntervalV1.from (paymentDeadline depositp)) (Contexts.txInfoValidRange txinfo)
+        -- deadlinepassed = LedgerIntervalV1.contains (LedgerIntervalV1.from (contractTimestamp depositp)) (Contexts.txInfoValidRange txinfo)
         
         -- adaroyalties :: Maybe Ada.Ada
         -- adaroyalties = do
