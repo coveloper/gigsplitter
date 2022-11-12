@@ -28,7 +28,7 @@ import qualified Plutus.Script.Utils.V2.Typed.Scripts.Validators as V2UtilsTypeS
 -- import qualified Prelude                                         as P
 import qualified Ledger                                          (PaymentPubKeyHash, unPaymentPubKeyHash)
 import qualified Plutus.V1.Ledger.Interval                       as LedgerIntervalV1
--- import qualified Ledger.Ada                                      as Ada
+import qualified Ledger.Ada                                      as Ada
 
 -- In case the show is canceled, money goes back to venue
 -- Manager will get 20% of amountDeposited
@@ -41,6 +41,13 @@ data EscrowDetails = EscrowDetails -- This specifies who we payout to and how mu
         contractTimestamp :: V2LedgerApi.POSIXTime,
         amountDeposited   :: P.Integer
     } deriving P.Show
+
+-- data BenParam = BenParam
+--     {
+--     creator :: Ledger.PaymentPubKeyHash,
+--     beneficiary :: Ledger.PaymentPubKeyHash,
+--     deadline :: V2LedgerApi.POSIXTime
+--     } 
 
 PlutusTx.unstableMakeIsData ''EscrowDetails
 PlutusTx.makeLift ''EscrowDetails
@@ -85,11 +92,11 @@ PlutusTx.makeLift ''Dat
 {-# INLINEABLE depositV #-}
 depositV :: EscrowDetails -> Dat -> Redeem -> Contexts.ScriptContext -> Bool
 depositV depositp d r context = 
-    traceIfFalse "This should not actually get printed" True -- Always pass during dev
-    -- traceIfFalse "Sorry the guess is not correct" (ddata d == redeem r) &&
-    -- traceIfFalse "Wrong pubkeyhash" signedByBeneficiary &&
-    -- traceIfFalse "Deadline not yet reached"  deadlinepassed 
-    -- && traceIfFalse "Not paid royalties"  calculateRoyalties
+    -- traceIfFalse "This should not actually get printed" True -- Always pass during dev
+    traceIfFalse "Sorry the show ID does not match" (showId d == redeem r)
+    -- traceIfFalse "Wrong pubkeyhash" signedByBeneficiary
+    -- traceIfFalse "Deadline not yet reached" deadlinepassed 
+    && traceIfFalse "Not paid royalties" calculateRoyalties
     where
         txinfo :: Contexts.TxInfo
         txinfo = Contexts.scriptContextTxInfo context
@@ -100,20 +107,20 @@ depositV depositp d r context =
         -- deadlinepassed :: Bool
         -- deadlinepassed = LedgerIntervalV1.contains (LedgerIntervalV1.from (contractTimestamp depositp)) (Contexts.txInfoValidRange txinfo)
         
-        -- adaroyalties :: Maybe Ada.Ada
-        -- adaroyalties = do
-        --     validatedValue <- Contexts.txOutValue . Contexts.txInInfoResolved <$> Contexts.findOwnInput context
-        --     Just $ Ada.fromValue validatedValue `Ada.divide` 10
+        adaroyalties :: Maybe Ada.Ada
+        adaroyalties = do
+            validatedValue <- Contexts.txOutValue . Contexts.txInInfoResolved <$> Contexts.findOwnInput context
+            Just $ Ada.fromValue validatedValue `Ada.divide` 20
 
-        -- getValuePaidToCreator :: Ada.Ada
-        -- getValuePaidToCreator = Ada.fromValue $ Contexts.valuePaidTo txinfo (Ledger.unPaymentPubKeyHash (creator depositp))
+        getValuePaidToManager :: Ada.Ada
+        getValuePaidToManager = Ada.fromValue $ Contexts.valuePaidTo txinfo (Ledger.unPaymentPubKeyHash (recipientManager depositp))
 
-        -- compareValues :: Ada.Ada -> Maybe Ada.Ada -> Bool
-        -- -- compareValues Nothing _ = False
-        -- compareValues vToCreator adaTx = Just (vToCreator) >= adaTx
+        compareValues :: Ada.Ada -> Maybe Ada.Ada -> Bool
+        -- compareValues Nothing _ = False
+        compareValues vToCreator adaTx = Just (vToCreator) >= adaTx
 
-        -- calculateRoyalties :: Bool
-        -- calculateRoyalties = compareValues (getValuePaidToCreator) (adaroyalties)
+        calculateRoyalties :: Bool
+        calculateRoyalties = compareValues (getValuePaidToManager) (adaroyalties)
 
 data DepositType
 instance V2UtilsTypeScripts.ValidatorTypes DepositType where

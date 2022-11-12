@@ -36,27 +36,26 @@ trace1 = do
           OffChain.bassPerson           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
           OffChain.drumsPerson          = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
           OffChain.guitarPerson         = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
-          OffChain.contractTimestamp    = TimeSlot.slotToBeginPOSIXTime def 30,
-          OffChain.amountDeposited      = 3000000, -- 3 ADA (just for testing)
+          OffChain.contractTimestamp    = TimeSlot.slotToBeginPOSIXTime def 1,
+          OffChain.amountDeposited      = 20000000, -- 20 ADA (just for testing)
           OffChain.showId               = 1 -- key for specific Gig, to use in another onlne db
     }
     Extras.logInfo $ "Deposit Made"
-    s <- waitNSlots 2
+    s <- waitNSlots 10
     Extras.logInfo $ "reached " ++ show s
 
-    -- Emulator.callEndpoint @"Payout" venueWallet $ OffChain.PayoutParams {
-    --       OffChain.ppVenuePerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
-    --       OffChain.ppManagerPerson  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
-    --       OffChain.ppSingerPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
-    --       OffChain.ppBassPerson     = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
-    --       OffChain.ppDrumsPerson    = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
-    --       OffChain.ppGuitarPerson   = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
-    --       OffChain.ppContractTimestamp   = TimeSlot.slotToBeginPOSIXTime def 30,
-    --       --OffChain.amountDeposited   = 2500000000, -- 2500 ADA (makes the playout splits easier for now)
-    --       OffChain.ppAmountDeposited   = 3000000, -- 3 ADA (just for testing)
-    --       OffChain.ppShowId            = 1 -- key for specific Gig, to use in another onlne db
-    -- }
-    -- void $ waitNSlots 15
+    Emulator.callEndpoint @"Payout" managerWallet $ OffChain.PayoutParams {
+          OffChain.ppVenuePerson            = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
+        --   OffChain.ppManagerPerson          = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
+          OffChain.ppSingerPerson           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
+          OffChain.ppBassPerson             = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
+          OffChain.ppDrumsPerson            = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
+          OffChain.ppGuitarPerson           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
+          OffChain.ppContractTimestamp      = TimeSlot.slotToBeginPOSIXTime def 1,
+          OffChain.ppAmountDeposited        = 20000000,
+          OffChain.ppShowId                 = 1
+    }
+    void $ waitNSlots 15
     -- Emulator.callEndpoint @"Grab" h1 $ OffChain.GrabParams {
     --       OffChain.gpCreator  = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3
     --     , OffChain.gpDeadline = TimeSlot.slotToBeginPOSIXTime def 15
