@@ -35,10 +35,13 @@ import qualified Ledger.Ada                                      as Ada
 -- List of all band members, who will get the remaining ADA after Manager is paid
 data EscrowDetails = EscrowDetails -- This specifies who we payout to and how much ADA is stored in escrow
     {
-        recipientVenue    :: Ledger.PaymentPubKeyHash, 
-        recipientManager  :: Ledger.PaymentPubKeyHash, 
-        bandMembers       :: [Ledger.PaymentPubKeyHash],
-        contractTimestamp :: V2LedgerApi.POSIXTime,
+        venue             :: Ledger.PaymentPubKeyHash, 
+        manager           :: Ledger.PaymentPubKeyHash,
+        bassPlayer        :: Ledger.PaymentPubKeyHash,
+        drummer           :: Ledger.PaymentPubKeyHash,
+        guitarPlayer      :: Ledger.PaymentPubKeyHash,
+        singer            :: Ledger.PaymentPubKeyHash,
+        showTime          :: V2LedgerApi.POSIXTime,
         amountDeposited   :: P.Integer
     } deriving P.Show
 
@@ -113,7 +116,7 @@ depositV depositp d r context =
             Just $ Ada.fromValue validatedValue `Ada.divide` 20
 
         getValuePaidToManager :: Ada.Ada
-        getValuePaidToManager = Ada.fromValue $ Contexts.valuePaidTo txinfo (Ledger.unPaymentPubKeyHash (recipientManager depositp))
+        getValuePaidToManager = Ada.fromValue $ Contexts.valuePaidTo txinfo (Ledger.unPaymentPubKeyHash (manager depositp))
 
         compareValues :: Ada.Ada -> Maybe Ada.Ada -> Bool
         -- compareValues Nothing _ = False
