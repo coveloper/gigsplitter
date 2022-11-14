@@ -108,6 +108,15 @@ deposit dp = do
     PlutusContract.logInfo @P.String P.$ TextPrintf.printf "--------------------------- Start Endpoint - Submited - Datum: %s - Value: %s ---------------------------" (P.show d) (P.show v)
     PlutusContract.logInfo @P.String P.$ TextPrintf.printf "--------------------------- Script with Address: %s and Hash: %s ---------------------------" (P.show scriptAddress) (P.show scriptHash)
 
+-- Refund
+-- Business Rule: Venue can cancel contract BEFORE showDate
+-- Must be signed by both Venue and Manager
+-- Can only be called by Venue, venue will get it's money back
+
+-- PayManager
+-- Manager can request a payment for all funds
+-- Must be AFTER showDate
+
 -- Payout
 payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
 payout PayoutParams{..} = do
