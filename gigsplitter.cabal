@@ -46,7 +46,8 @@ library
         Validators.PayoutValidator,
         GigsplitterEmulator,
         GigsplitterOffChain,
-        GigsplitterOnChain
+        GigsplitterOnChain,
+        Deploy
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -73,7 +74,6 @@ library
         lens -any,
         cardano-api, 
         cardano-binary,
-      --additionals
         serialise -any,
         base16-bytestring,
         data-default,
