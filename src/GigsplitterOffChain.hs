@@ -55,12 +55,7 @@ data DepositParams =
         }
     deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON, DataOpenApiSchema.ToSchema)
 PlutusTx.unstableMakeIsData ''DepositParams
--- PlutusTx.makeLift ''DepositParams
 
--- data PayoutParams = PayoutParams 
---     {
---         ppShowId              :: Integer
---     } deriving (GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON)
 data PayoutParams =
     PayoutParams
         { ppVenuePkh            :: !Ledger.PaymentPubKeyHash,
@@ -205,7 +200,7 @@ findUtxoInValidator gparam n = do
 
 getTotalValuePay :: LedgerTx.ChainIndexTxOut -> Ledger.Value
 getTotalValuePay o = do
-    Ada.toValue $ (Ada.fromValue $ LedgerTx._ciTxOutValue o) `Ada.divide` 10
+    Ada.toValue $ (Ada.fromValue $ LedgerTx._ciTxOutValue o) `Ada.divide` 20
     -- return tValue
 
 
@@ -215,8 +210,3 @@ endpoints = PlutusContract.awaitPromise (deposit' `PlutusContract.select` payout
     where 
         deposit' = PlutusContract.endpoint @"Deposit" deposit
         payout' = PlutusContract.endpoint @"Payout" payout
-
--- endpoints :: PlutusContract.Contract () GigSchema T.Text ()
--- -- BLOCK10
-
--- endpoints = PlutusContract.selectList [deposit, unlock]

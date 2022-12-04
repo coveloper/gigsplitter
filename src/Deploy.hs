@@ -11,8 +11,7 @@ import qualified Data.ByteString.Lazy                as LBS
 import qualified Data.ByteString.Short               as SBS
 import qualified Plutus.V2.Ledger.Api                as LedgerApiV2
 import qualified PlutusTx
---import qualified Ledger
-import qualified Ledger                                          (PaymentPubKeyHash, unPaymentPubKeyHash)
+import qualified Ledger
 
 import qualified GigsplitterOnChain                as OnChain
 
@@ -52,10 +51,15 @@ writeInitDatum = writeJSON "../scripts/plutus-scripts/unit.json" ()
 --         d = PlutusTx.toBuiltinData contributor
 --     in writeJSON "../plutus-scripts/parameterized-datum.json" d
 
--- writeMyFirstValidatorScript :: IO (Either (FileError ()) ())
--- writeMyFirstValidatorScript = writeValidator "Deploy/Parameterized.plutus" $ OnChain.validator $ OnChain.BenParam 
---     {
---         OnChain.creator = Ledger.PaymentPubKeyHash "80b34df2162e9c4a38ce63322a8f903c9455a0bebd64c02cf1f3222a",
---         OnChain.beneficiary = Ledger.PaymentPubKeyHash "75eacb8808f937e42cde4312d2d4bb42bd1cbfca379bbe90a3ec0383",
---         OnChain.deadline = 1665105051000
---     }
+writeGigsplitterValidatorScript :: IO (Either (FileError ()) ())
+writeGigsplitterValidatorScript = writeValidator "../scripts/plutus-scripts/GigsplitterValidator.plutus" $ OnChain.validator $ OnChain.EscrowDetails 
+    {
+        OnChain.venue             = Ledger.PaymentPubKeyHash "87aaedbffe58187afa347dbdbad230e162f67a32e1e9c4e0275b6deb",
+        OnChain.manager           = Ledger.PaymentPubKeyHash "80e627c7265c7c8e0977351cc1380ab3a1abf8fd16087fc0d4feb722", 
+        OnChain.bassPlayer        = Ledger.PaymentPubKeyHash "5161d346e754260809ac9516333f3cb758610fe75e0fad3febd68509",
+        OnChain.drummer           = Ledger.PaymentPubKeyHash "56d6b2d5d10b8cdf2a80d65f507808f1a13cebf8cbaaa2c90c0a033c",
+        OnChain.guitarPlayer      = Ledger.PaymentPubKeyHash "3151b18f1dd6564c25977c9a324e52c325dd46ed6dbf2b9e025538ad",
+        OnChain.singer            = Ledger.PaymentPubKeyHash "fc45b09323003a6ad482ac9c944b5d8a6e2a84c0872d5f642be72e71",
+        OnChain.showTime          = 1668463801,
+        OnChain.amountDeposited   = 20000000
+    }
