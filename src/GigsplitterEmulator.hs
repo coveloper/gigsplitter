@@ -29,9 +29,6 @@ trace1 = do
     guitarPlayerWallet    <- Emulator.activateContractWallet (Wallet.knownWallet 5) OffChain.endpoints
     singerWallet          <- Emulator.activateContractWallet (Wallet.knownWallet 6) OffChain.endpoints
     
-    
-    
-
     Emulator.callEndpoint @"Deposit" venueWallet $ OffChain.DepositParams {
           OffChain.venuePkh             = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
           OffChain.managerPkh           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2,
