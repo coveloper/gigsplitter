@@ -30,6 +30,7 @@ import qualified Plutus.Contract          as PlutusContract
 import qualified Ledger.Ada               as Ada
 import qualified Ledger.Tx                as LedgerTx
 import qualified Plutus.V2.Ledger.Api                            as LedgerApiV2
+
 import qualified Ledger                                          (PaymentPubKeyHash, Value)
 import qualified Text.Printf              as TextPrintf (printf)
 import qualified Ledger.Constraints       as Constraints
@@ -129,6 +130,7 @@ payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
 payout PayoutParams{..} = do
     requestor <- PlutusContract.ownFirstPaymentPubKeyHash
     now <- PlutusContract.currentTime
+    -- utxos <- utxosAt scrAddress
     if now < ppShowTime
         then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppShowTime) (P.show now)
         else do
@@ -156,6 +158,39 @@ payout PayoutParams{..} = do
                     submittedTx <- PlutusContract.submitTxConstraintsWith @OnChain.DepositType lookups tx
                     Monad.void $ PlutusContract.awaitTxConfirmed $ LedgerTx.getCardanoTxId submittedTx
                     PlutusContract.logInfo @P.String $ "Payout complete"
+
+
+-- payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
+-- payout PayoutParams{..} = do
+--     requestor <- PlutusContract.ownFirstPaymentPubKeyHash
+--     now <- PlutusContract.currentTime
+--     if now < ppShowTime
+--         then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppShowTime) (P.show now)
+--         else do
+--             let param = OnChain.EscrowDetails {
+--                         OnChain.venue               = ppVenuePkh,
+--                         OnChain.manager             = requestor,
+--                         OnChain.bassPlayer          = ppBassPlayerPkh,
+--                         OnChain.drummer             = ppDrummerPkh,
+--                         OnChain.guitarPlayer        = ppGuitarPlayerPkh,
+--                         OnChain.singer              = ppSingerPkh,
+--                         OnChain.showTime            = ppShowTime,
+--                         OnChain.amountDeposited     = ppAmountDeposited
+--                 }
+--                 r = OnChain.Redeem { OnChain.redeem = ppShowId }
+--             maybeutxo <- findUtxoInValidator param ppShowId
+--             case maybeutxo of
+--                 Nothing -> PlutusContract.logInfo @P.String $ TextPrintf.printf "NO MATCHING UTXOS FOUND - WRONG SHOW ID?"
+--                 Just (oref, o) -> do
+--                     PlutusContract.logInfo @P.String $ TextPrintf.printf "Redeem utxos %s - with timing now at %s:" (P.show oref) (P.show $ now)
+--                     let lookups = Constraints.unspentOutputs (Map.singleton oref o) P.<>
+--                                   Constraints.plutusV2OtherScript (OnChain.validator param)
+--                         tx = Constraints.mustSpendScriptOutput oref (ScriptsLedger.Redeemer $ PlutusTx.toBuiltinData r) P.<>
+--                             Constraints.mustValidateIn (LedgerApiV2.from now) P.<>
+--                             Constraints.mustPayToPubKey requestor (getTotalValuePay o)
+--                     submittedTx <- PlutusContract.submitTxConstraintsWith @OnChain.DepositType lookups tx
+--                     Monad.void $ PlutusContract.awaitTxConfirmed $ LedgerTx.getCardanoTxId submittedTx
+--                     PlutusContract.logInfo @P.String $ "Payout complete"
 
 getDatum :: (LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut) -> Maybe OnChain.Dat
 getDatum (_, o) = do
@@ -203,6 +238,12 @@ getTotalValuePay o = do
     Ada.toValue $ (Ada.fromValue $ LedgerTx._ciTxOutValue o) `Ada.divide` 20
     -- return tValue
 
+
+-- validator :: Validator
+-- validator = Scripts.validatorScript typedValidator
+
+-- scrAddress :: Ledger.Address
+-- scrAddress = scriptAddress validator
 
 -- This puts all together. The select means to offer selection to the user. 
 endpoints :: PlutusContract.Contract () GigSchema T.Text ()
