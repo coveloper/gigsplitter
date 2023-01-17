@@ -30,6 +30,7 @@ import qualified Plutus.Contract          as PlutusContract
 import qualified Ledger.Ada               as Ada
 import qualified Ledger.Tx                as LedgerTx
 import qualified Plutus.V2.Ledger.Api                            as LedgerApiV2
+
 import qualified Ledger                                          (PaymentPubKeyHash, Value)
 import qualified Text.Printf              as TextPrintf (printf)
 import qualified Ledger.Constraints       as Constraints
@@ -43,34 +44,29 @@ import qualified GigsplitterOnChain as OnChain
 
 data DepositParams =
     DepositParams
-        { venuePerson       :: !Ledger.PaymentPubKeyHash,
-          managerPerson     :: !Ledger.PaymentPubKeyHash, 
-          singerPerson      :: !Ledger.PaymentPubKeyHash,
-          bassPerson        :: !Ledger.PaymentPubKeyHash, 
-          drumsPerson       :: !Ledger.PaymentPubKeyHash,
-          guitarPerson      :: !Ledger.PaymentPubKeyHash,
-          contractTimestamp :: !LedgerApiV2.POSIXTime,
+        { venuePkh          :: !Ledger.PaymentPubKeyHash,
+          managerPkh        :: !Ledger.PaymentPubKeyHash,
+          bassPlayerPkh     :: !Ledger.PaymentPubKeyHash,
+          drummerPkh        :: !Ledger.PaymentPubKeyHash,
+          guitarPlayerPkh   :: !Ledger.PaymentPubKeyHash,
+          singerPkh         :: !Ledger.PaymentPubKeyHash,
+          showTime          :: !LedgerApiV2.POSIXTime,
           amountDeposited   :: !P.Integer,
           showId            :: !P.Integer
         }
     deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON, DataOpenApiSchema.ToSchema)
 PlutusTx.unstableMakeIsData ''DepositParams
--- PlutusTx.makeLift ''DepositParams
 
--- data PayoutParams = PayoutParams 
---     {
---         ppShowId              :: Integer
---     } deriving (GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON)
 data PayoutParams =
     PayoutParams
-        { ppVenuePerson       :: !Ledger.PaymentPubKeyHash,
-          ppSingerPerson      :: !Ledger.PaymentPubKeyHash,
-          ppBassPerson        :: !Ledger.PaymentPubKeyHash, 
-          ppDrumsPerson       :: !Ledger.PaymentPubKeyHash,
-          ppGuitarPerson      :: !Ledger.PaymentPubKeyHash,
-          ppContractTimestamp :: !LedgerApiV2.POSIXTime,
-          ppAmountDeposited   :: !P.Integer,
-          ppShowId            :: !P.Integer
+        { ppVenuePkh            :: !Ledger.PaymentPubKeyHash,
+          ppBassPlayerPkh       :: !Ledger.PaymentPubKeyHash,
+          ppDrummerPkh          :: !Ledger.PaymentPubKeyHash,
+          ppGuitarPlayerPkh     :: !Ledger.PaymentPubKeyHash,
+          ppSingerPkh           :: !Ledger.PaymentPubKeyHash,
+          ppShowTime            :: !LedgerApiV2.POSIXTime,
+          ppAmountDeposited     :: !P.Integer,
+          ppShowId              :: !P.Integer
         }
     deriving (P.Show, GHCGenerics.Generic, DataAeson.ToJSON, DataAeson.FromJSON, DataOpenApiSchema.ToSchema)
 
@@ -85,13 +81,14 @@ deposit :: PlutusContract.AsContractError e => DepositParams -> PlutusContract.C
 deposit dp = do
     let p = OnChain.EscrowDetails -- Populate OnChain.EscrowDetails with values from DepositParams
             {
-                OnChain.recipientVenue    = venuePerson dp,
-                OnChain.recipientManager  = managerPerson dp, 
-                OnChain.bandMembers       = [singerPerson dp,
-                                             bassPerson dp,
-                                             drumsPerson dp,
-                                             guitarPerson dp],
-                OnChain.contractTimestamp = contractTimestamp dp,
+                
+                OnChain.venue    = venuePkh dp,
+                OnChain.manager  = managerPkh dp, 
+                OnChain.bassPlayer  = bassPlayerPkh dp,
+                OnChain.drummer  = drummerPkh dp,
+                OnChain.guitarPlayer  = guitarPlayerPkh dp,
+                OnChain.singer  = singerPkh dp,
+                OnChain.showTime = showTime dp,
                 OnChain.amountDeposited   = amountDeposited dp
             }
         d = OnChain.Dat { OnChain.showId = showId dp}
@@ -108,23 +105,44 @@ deposit dp = do
     PlutusContract.logInfo @P.String P.$ TextPrintf.printf "--------------------------- Start Endpoint - Submited - Datum: %s - Value: %s ---------------------------" (P.show d) (P.show v)
     PlutusContract.logInfo @P.String P.$ TextPrintf.printf "--------------------------- Script with Address: %s and Hash: %s ---------------------------" (P.show scriptAddress) (P.show scriptHash)
 
+-- Refund
+-- Business Rule: Venue can cancel contract BEFORE showDate
+-- Must be signed by both Venue and Manager
+-- Can only be called by Venue, venue will get it's money back
+
+-- PayManager
+-- Manager can request a payment for all funds
+-- Must be AFTER showDate
+-- Must be signed by both Venue and Manager
+-- All money goes to manager
+-- 20% of money pays to manager
+-- 80% (or remainder after fees), creates utxos for each band member wallet address
+
+-- PayBandMember
+-- Band Member can request a payment
+-- Must be AFTER showDate
+-- Must be signed by both BandMember and Manager ?? (maybe just band member)
+-- BandMember PKH must be in datum
+-- Request filters uxtos to find matching uxto and consumes entire utxo
+
 -- Payout
 payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
 payout PayoutParams{..} = do
     requestor <- PlutusContract.ownFirstPaymentPubKeyHash
     now <- PlutusContract.currentTime
-    if now < ppContractTimestamp
-        then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppContractTimestamp) (P.show now)
+    -- utxos <- utxosAt scrAddress
+    if now < ppShowTime
+        then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppShowTime) (P.show now)
         else do
             let param = OnChain.EscrowDetails {
-                        OnChain.recipientVenue = ppVenuePerson,
-                        OnChain.recipientManager = requestor,
-                        OnChain.bandMembers = [ppSingerPerson,
-                                               ppBassPerson,
-                                               ppDrumsPerson,
-                                               ppGuitarPerson],
-                        OnChain.contractTimestamp = ppContractTimestamp,
-                        OnChain.amountDeposited = ppAmountDeposited
+                        OnChain.venue               = ppVenuePkh,
+                        OnChain.manager             = requestor,
+                        OnChain.bassPlayer          = ppBassPlayerPkh,
+                        OnChain.drummer             = ppDrummerPkh,
+                        OnChain.guitarPlayer        = ppGuitarPlayerPkh,
+                        OnChain.singer              = ppSingerPkh,
+                        OnChain.showTime            = ppShowTime,
+                        OnChain.amountDeposited     = ppAmountDeposited
                 }
                 r = OnChain.Redeem { OnChain.redeem = ppShowId }
             maybeutxo <- findUtxoInValidator param ppShowId
@@ -140,6 +158,39 @@ payout PayoutParams{..} = do
                     submittedTx <- PlutusContract.submitTxConstraintsWith @OnChain.DepositType lookups tx
                     Monad.void $ PlutusContract.awaitTxConfirmed $ LedgerTx.getCardanoTxId submittedTx
                     PlutusContract.logInfo @P.String $ "Payout complete"
+
+
+-- payout :: forall w s. PayoutParams -> PlutusContract.Contract w s T.Text ()
+-- payout PayoutParams{..} = do
+--     requestor <- PlutusContract.ownFirstPaymentPubKeyHash
+--     now <- PlutusContract.currentTime
+--     if now < ppShowTime
+--         then PlutusContract.logInfo @P.String $ TextPrintf.printf "Deadline not yet reached - Deadline: %s - Now: %s" (P.show ppShowTime) (P.show now)
+--         else do
+--             let param = OnChain.EscrowDetails {
+--                         OnChain.venue               = ppVenuePkh,
+--                         OnChain.manager             = requestor,
+--                         OnChain.bassPlayer          = ppBassPlayerPkh,
+--                         OnChain.drummer             = ppDrummerPkh,
+--                         OnChain.guitarPlayer        = ppGuitarPlayerPkh,
+--                         OnChain.singer              = ppSingerPkh,
+--                         OnChain.showTime            = ppShowTime,
+--                         OnChain.amountDeposited     = ppAmountDeposited
+--                 }
+--                 r = OnChain.Redeem { OnChain.redeem = ppShowId }
+--             maybeutxo <- findUtxoInValidator param ppShowId
+--             case maybeutxo of
+--                 Nothing -> PlutusContract.logInfo @P.String $ TextPrintf.printf "NO MATCHING UTXOS FOUND - WRONG SHOW ID?"
+--                 Just (oref, o) -> do
+--                     PlutusContract.logInfo @P.String $ TextPrintf.printf "Redeem utxos %s - with timing now at %s:" (P.show oref) (P.show $ now)
+--                     let lookups = Constraints.unspentOutputs (Map.singleton oref o) P.<>
+--                                   Constraints.plutusV2OtherScript (OnChain.validator param)
+--                         tx = Constraints.mustSpendScriptOutput oref (ScriptsLedger.Redeemer $ PlutusTx.toBuiltinData r) P.<>
+--                             Constraints.mustValidateIn (LedgerApiV2.from now) P.<>
+--                             Constraints.mustPayToPubKey requestor (getTotalValuePay o)
+--                     submittedTx <- PlutusContract.submitTxConstraintsWith @OnChain.DepositType lookups tx
+--                     Monad.void $ PlutusContract.awaitTxConfirmed $ LedgerTx.getCardanoTxId submittedTx
+--                     PlutusContract.logInfo @P.String $ "Payout complete"
 
 getDatum :: (LedgerApiV2.TxOutRef, LedgerTx.ChainIndexTxOut) -> Maybe OnChain.Dat
 getDatum (_, o) = do
@@ -184,9 +235,15 @@ findUtxoInValidator gparam n = do
 
 getTotalValuePay :: LedgerTx.ChainIndexTxOut -> Ledger.Value
 getTotalValuePay o = do
-    Ada.toValue $ (Ada.fromValue $ LedgerTx._ciTxOutValue o) `Ada.divide` 10
+    Ada.toValue $ (Ada.fromValue $ LedgerTx._ciTxOutValue o) `Ada.divide` 20
     -- return tValue
 
+
+-- validator :: Validator
+-- validator = Scripts.validatorScript typedValidator
+
+-- scrAddress :: Ledger.Address
+-- scrAddress = scriptAddress validator
 
 -- This puts all together. The select means to offer selection to the user. 
 endpoints :: PlutusContract.Contract () GigSchema T.Text ()
@@ -194,8 +251,3 @@ endpoints = PlutusContract.awaitPromise (deposit' `PlutusContract.select` payout
     where 
         deposit' = PlutusContract.endpoint @"Deposit" deposit
         payout' = PlutusContract.endpoint @"Payout" payout
-
--- endpoints :: PlutusContract.Contract () GigSchema T.Text ()
--- -- BLOCK10
-
--- endpoints = PlutusContract.selectList [deposit, unlock]

@@ -22,21 +22,21 @@ test = Emulator.runEmulatorTraceIO trace1
 
 trace1 :: Emulator.EmulatorTrace ()
 trace1 = do
-    venueWallet     <- Emulator.activateContractWallet (Wallet.knownWallet 1) OffChain.endpoints
-    managerWallet   <- Emulator.activateContractWallet (Wallet.knownWallet 2) OffChain.endpoints
-    singerWallet    <- Emulator.activateContractWallet (Wallet.knownWallet 3) OffChain.endpoints
-    bassWallet      <- Emulator.activateContractWallet (Wallet.knownWallet 4) OffChain.endpoints
-    drumsWallet     <- Emulator.activateContractWallet (Wallet.knownWallet 5) OffChain.endpoints
-    guitarWallet    <- Emulator.activateContractWallet (Wallet.knownWallet 6) OffChain.endpoints
-
+    venueWallet           <- Emulator.activateContractWallet (Wallet.knownWallet 1) OffChain.endpoints
+    managerWallet         <- Emulator.activateContractWallet (Wallet.knownWallet 2) OffChain.endpoints
+    bassPlayerWallet      <- Emulator.activateContractWallet (Wallet.knownWallet 3) OffChain.endpoints
+    drummerWallet         <- Emulator.activateContractWallet (Wallet.knownWallet 4) OffChain.endpoints
+    guitarPlayerWallet    <- Emulator.activateContractWallet (Wallet.knownWallet 5) OffChain.endpoints
+    singerWallet          <- Emulator.activateContractWallet (Wallet.knownWallet 6) OffChain.endpoints
+    
     Emulator.callEndpoint @"Deposit" venueWallet $ OffChain.DepositParams {
-          OffChain.venuePerson          = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
-          OffChain.managerPerson        = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
-          OffChain.singerPerson         = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
-          OffChain.bassPerson           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
-          OffChain.drumsPerson          = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
-          OffChain.guitarPerson         = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
-          OffChain.contractTimestamp    = TimeSlot.slotToBeginPOSIXTime def 1,
+          OffChain.venuePkh             = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
+          OffChain.managerPkh           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2,
+          OffChain.bassPlayerPkh        = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3, 
+          OffChain.drummerPkh           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4,
+          OffChain.guitarPlayerPkh      = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
+          OffChain.singerPkh            = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
+          OffChain.showTime             = TimeSlot.slotToBeginPOSIXTime def 1,
           OffChain.amountDeposited      = 20000000, -- 20 ADA (just for testing)
           OffChain.showId               = 1 -- key for specific Gig, to use in another onlne db
     }
@@ -45,13 +45,13 @@ trace1 = do
     Extras.logInfo $ "reached " ++ show s
 
     Emulator.callEndpoint @"Payout" managerWallet $ OffChain.PayoutParams {
-          OffChain.ppVenuePerson            = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
-        --   OffChain.ppManagerPerson          = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2, 
-          OffChain.ppSingerPerson           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3,
-          OffChain.ppBassPerson             = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4, 
-          OffChain.ppDrumsPerson            = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
-          OffChain.ppGuitarPerson           = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
-          OffChain.ppContractTimestamp      = TimeSlot.slotToBeginPOSIXTime def 1,
+          OffChain.ppVenuePkh               = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 1,
+      --     OffChain.ppManagerPkh             = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 2,
+          OffChain.ppBassPlayerPkh          = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 3, 
+          OffChain.ppDrummerPkh             = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 4,
+          OffChain.ppGuitarPlayerPkh        = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 5,
+          OffChain.ppSingerPkh              = Wallet.mockWalletPaymentPubKeyHash $ Wallet.knownWallet 6,
+          OffChain.ppShowTime               = TimeSlot.slotToBeginPOSIXTime def 1,
           OffChain.ppAmountDeposited        = 20000000,
           OffChain.ppShowId                 = 1
     }
